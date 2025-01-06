@@ -6,11 +6,11 @@
 
 LOAD_SEGMENT = 0x1000    # Location of 2nd stage bootloader
 
-# First 3 bytes must be 0
+# First 3 bytes allocated for jumping
 main:
     jmp start
 
-
+# Bytes 4-62 stores deviceinfo
 bootsector:                             # Store information about the floppy boot device
     iOEM:          .ascii "osOS/BOS"    # OEM String
     iSectSize:     .word  0x200         # bytes per sector
@@ -32,10 +32,12 @@ bootsector:                             # Store information about the floppy boo
     acVolumeLabel: .ascii "MYVOLUME   " # volume label
     acFSType:      .ascii "FAT16   "    # file system type
 
+# Everything else (must be smaller than 512 bytes) can be our code
+
 usefulconstants:
-    diskerror: .asciz "Disk ERROR. "
+    diskerror: .asciz "Disk ERROR.\r\n"
     rebootmsg: .asciz "Press any key to reboot\r\n"
-    loadmsg:   .asciz "Loading FreePaw..."
+    loadmsg:   .asciz "Loading FreePaw...\r\n"
 
 Reboot:
     lea si, rebootmsg
@@ -86,6 +88,7 @@ start:
     mov es, ax
     mov ss, ax
     mov sp, 0x7c00       # Setup top of stack. Grows down in x86
+    lea si, loadmsg
     .resetdisk:
     mov dl, iBootDrive   # dl stores the drive we want to reset
     xor ax, ax           # ax stores the subfunction to use; Subfunc 0 is reset
