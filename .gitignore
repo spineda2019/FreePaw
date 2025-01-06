@@ -3,3 +3,4 @@ zig-out/
 a.out
 *.o
 *.bin
+*.img
