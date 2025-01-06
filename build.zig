@@ -17,5 +17,39 @@
 const std = @import("std");
 
 pub fn build(b: *std.Build) void {
-    _ = b;
+    const install = b.getInstallStep();
+    const bootloader = b.step("bootloader", "Build OpenPaw Bootloader");
+    install.dependOn(bootloader);
+
+    const bootloader_assembly = b.path("architecture/x86/bootsector.asm");
+    const obj_output = "bootsector.o";
+    const linker_output = "bootsector_tmp.o";
+    const boot_output = "boot.bin";
+
+    const gnu_assembler = b.addSystemCommand(&[_][]const u8{
+        "as",
+        bootloader_assembly.getPath(b),
+        "-o",
+        obj_output,
+    });
+    const gnu_linker = b.addSystemCommand(&[_][]const u8{
+        "ld",
+        "-o",
+        linker_output,
+        "-Ttext",
+        "0x7c00",
+    });
+    const final_bootloader = b.addSystemCommand(&[_][]const u8{
+        "objcopy",
+        "-O",
+        "binary",
+        "-j",
+        ".text",
+        linker_output,
+        boot_output,
+    });
+
+    final_bootloader.step.dependOn(&gnu_linker.step);
+    gnu_linker.step.dependOn(&gnu_assembler.step);
+    gnu_assembler.step.dependOn(bootloader);
 }
