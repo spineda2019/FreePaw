@@ -65,7 +65,7 @@ ReadSector:
     # DH: Head number
     # DL: Drive number (bit 7 is set if this is a harddisk)
     # ES:BX -> Data Buffer
-    .readsector
+    .readsector:
     # Calculate Sector Number
     mov bx, iTrackSect                  # Save sectors/track in bx
     xor dx, dx                          # DX:AX is divisor (DIVISOR/NUMERATOR)
