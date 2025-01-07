@@ -35,9 +35,34 @@ bootsector:                             # Store information about the floppy boo
 # Everything else (must be smaller than 512 bytes) can be our code
 
 usefulconstants:
-    diskerror: .asciz "Disk ERROR.\r\n"
-    rebootmsg: .asciz "Press any key to reboot\r\n"
+    diskerror: .asciz "(FreePaw) Disk ERROR.\r\n"
+    rebootmsg: .asciz "(FreePaw) Press any key to reboot\r\n"
     loadmsg:   .asciz "Loading FreePaw...\r\n"
+
+# To use logical block adressing (LBA) the following conversions will be needed
+# Sector   = (LBA mod SectorsPerTrack) + 1
+# Cylinder = (LBA / SectorsPerTrack) / NumHeads
+# Head     = (LBA / SectorsPerTrack) mod NumHeads
+
+# In the routine, the following registers will hold the following info:
+# AX: Logical block
+# CX: Try count (3 try max)
+# BX: Data buffer offset
+# Do NOT clobber these registers (except setting CX to 0)
+ReadSector:
+    xor cx, cx                          # Accumulator (CX) will be try count
+
+    # Disk - Read Sector(s) Into Memory - int 0x13 subfunction 0x2
+    # AH: 0x2 (Subfunction 2)
+    # AL: Number of sectors to read (must be non zero)
+    # CH: Low eight bits of cylinder number
+    # CL (bits 0-5): Sector number 1-63
+    # CL (bits 6-7): High two bits of cylinder (Hard disk only)
+    # DH: Head number
+    # DL: Drive number (bit 7 is set if this is a harddisk)
+    # ES:BX -> Data Buffer
+    .readsector
+    ret
 
 Reboot:
     lea si, rebootmsg
