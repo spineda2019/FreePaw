@@ -52,6 +52,10 @@ usefulconstants:
 ReadSector:
     xor cx, cx                          # Accumulator (CX) will be try count
 
+    push ax                             # Save registers to avoid clobbering
+    push bx
+    push cx
+
     # Disk - Read Sector(s) Into Memory - int 0x13 subfunction 0x2
     # AH: 0x2 (Subfunction 2)
     # AL: Number of sectors to read (must be non zero)
@@ -62,6 +66,23 @@ ReadSector:
     # DL: Drive number (bit 7 is set if this is a harddisk)
     # ES:BX -> Data Buffer
     .readsector
+    # Calculate Sector Number
+    mov bx, iTrackSect                  # Save sectors/track in bx
+    xor dx, dx                          # DX:AX is divisor (DIVISOR/NUMERATOR)
+
+    div bx                              # performs (DX:AX)/BX
+                                        # Quotient in AX, remainder in DX
+                                        # Performs (LogicalBlock/SectorsPerTrack)
+
+    inc dx                              # Add 1 to LBA mod Sectors per track
+                                        # DX is now sector number
+
+    mov cl, dl                          # setup sector num in CL for interrupt
+
+    # Calculate Cylinder Number
+    mov bx, iHeadCnt
+    xor dx, dx
+    div bx                              # Performs (LogicalBlock/NumberOfHeads)
     ret
 
 Reboot:
