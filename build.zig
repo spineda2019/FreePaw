@@ -18,7 +18,7 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) void {
     const install = b.getInstallStep();
-    const bootloader = b.step("bootloader", "Build OpenPaw Bootloader");
+    const bootloader = b.step("bootloader", "Build FreePaw Bootloader");
     install.dependOn(bootloader);
 
     const bootloader_assembly = b.path("architecture/x86/bootsector.asm");
