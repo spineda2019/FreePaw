@@ -12,7 +12,7 @@ SECTIONS {
 
     .sig : 
     {
-        SHORT(0xAA55)
+        SHORT(0xAA55)      /* Append AA55 to end to make device bootable */
     }
 
     /DISCARD/ : {
