@@ -68,9 +68,10 @@ usefulconstants:
 ReadSector:
     xor cx, cx                          # Accumulator (CX) will be try count
 
+    .readsector:
     push ax                             # Save registers to avoid clobbering
-    push bx
     push cx
+    push bx
 
     # Disk - Read Sector(s) Into Memory - int 0x13 subfunction 0x2
     # AH: 0x2 (Subfunction 2)
@@ -81,7 +82,7 @@ ReadSector:
     # DH: Head number
     # DL: Drive number (bit 7 is set if this is a harddisk)
     # ES:BX -> Data Buffer
-    .readsector:
+
     # Calculate Sector Number
     mov bx, iTrackSect                  # Save sectors/track in bx
     xor dx, dx                          # DX:AX is divisor (DIVISOR/NUMERATOR)
@@ -95,11 +96,39 @@ ReadSector:
 
     mov cl, dl                          # setup sector num in CL for interrupt
 
-    # Calculate Cylinder Number
-    mov bx, iHeadCnt
-    xor dx, dx
-    div bx                              # Performs (LogicalBlock/NumberOfHeads)
+    # Calculate Cylinder Number (AX is now LBA/SectorsPerTrack)
+    mov bx, iHeadCnt                    # Number of disk heads in BX
+    xor dx, dx                          # Clear divisor high bits (DIVISOR/NUMERATOR)
+    div bx                              # (LogicalBlock/SectorsPerTrack/NumberOfHe)
+                                        # Above calculates cylinder
+    mov ch, al                          # Setup cylinder num in CH for interrupt
+    
+    # Calculate Head Number (AX is now LBA/SectorsPerTrack mod Number of Heads)
+    xchg dl, dh                         # DL held remainder (mod)
+                                        # Store that in DH for the interrupt call
+    .bios_call:
+    mov ah, 0x2                         # Subfunction 2
+    mov al, 0x1                         # Read sector 1
+    mov dl, iBootDrive                  # Boot from this drive
+    pop bx                              # pop top back into BX (top is old BX)
+    int 0x13
+    jc .readfail                        # diskread sets carry flag on fail
+    pop cx                              # cleanup stack on success and return
+    pop ax
     ret
+    .readfail:
+    pop cx                              # Get back try count from stack
+    inc cx
+    cmp cx, 0x4
+    jne .retry                          # If not 4 tries, jump to retry
+    lea si, diskerror                   # Otherwise reboot
+    call WriteString
+    call Reboot
+    .retry:
+    xor ax, ax                          # Reset disk
+    int 0x13
+    pop ax
+    jmp .readsector
 
 Reboot:
     lea si, rebootmsg
