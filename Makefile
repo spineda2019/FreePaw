@@ -28,6 +28,7 @@ $(BUILD)/FreePaw.img: $(BUILD)/boot.bin
 
 run_bochs: floppy
 	@echo "Running bochs with built bootloader..."
+	@bochs -f bochs.config -q
 
 run_qemu: floppy
 	@echo "Running qemu with built bootloader..."
