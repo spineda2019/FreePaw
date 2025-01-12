@@ -1,16 +1,17 @@
 BUILD=build
 OBJECTS=$(BUILD)/boot.o
 
-.PHONY: clean all bootloader
+.PHONY: clean all
 
-all: bootloader
+all: $(BUILD)/boot.bin
 
-bootloader: $(OBJECTS)
+$(BUILD)/boot.bin: $(BUILD) $(OBJECTS)
 	@echo "Building FreePaw bootloader"
-	ld $(OBJECTS) -o $(BUILD)/boot.bin -T architecture/x86/link.ld
+	@ld $(OBJECTS) -o $(BUILD)/boot.bin -T architecture/x86/link.ld
+	@echo "Built bootloader: $@"
 
 $(BUILD)/%.o: architecture/x86/bootsector.asm
-	as $< -o $@
+	@as $< -o $@
 
 $(BUILD):
 	@echo "Creating build dir: $(BUILD)"
