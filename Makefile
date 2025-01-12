@@ -1,7 +1,7 @@
 BUILD=build
 OBJECTS=$(BUILD)/boot.o
 
-.PHONY: clean all floppy
+.PHONY: clean all floppy run_bochs run_qemu
 
 all: $(BUILD)/boot.bin
 
@@ -25,6 +25,13 @@ $(BUILD)/FreePaw.img: $(BUILD)/boot.bin
 	@bximage -q -func=create -fd=1.44M $(BUILD)/FreePaw.img
 	@dd if=$< of=$@ bs=512 count=1
 	@echo "Finished writing to floppy"
+
+run_bochs: floppy
+	@echo "Running bochs with built bootloader..."
+
+run_qemu: floppy
+	@echo "Running qemu with built bootloader..."
+	@qemu-system-i386 -fda $(BUILD)/FreePaw.img -boot a &
 
 clean:
 	@echo "Removing build dir: $(BUILD)..."
